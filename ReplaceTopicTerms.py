@@ -1,6 +1,7 @@
 import xlrd
 import pandas as pd
 import sys
+from sklearn.feature_extraction.text import TfidfVectorizer
 
 
 class ReplaceTopicTerms:
@@ -18,7 +19,8 @@ class ReplaceTopicTerms:
         terms=summary_sheet['Terms'].tolist()
         for i in range(len(topics)):
             topic=topics[i]
-            term=terms[i].split(", ")
+
+            term=terms[i].split(", ") if type(terms[i])==type('s') else []
             for word in term:
                 word_len=len(word.split(" "))
                 index=word_len-1 if word_len<=3 else 3
@@ -50,8 +52,11 @@ class ReplaceTopicTerms:
 
         try:
             with open(gavagai_input_file,'r') as f:
-
-                for line in f.readlines():
+                f_write = open(output_name, 'a')
+                s=f.readlines()
+                f_write.write(s[0])   #Skip first row
+                f_write.close()
+                for line in s[1:]:
                     f_write = open(output_name, 'a')
                     f_write.write(self.replace_one_review(line))
                     f_write.close()
@@ -61,10 +66,22 @@ class ReplaceTopicTerms:
             print("Unexpected error:", sys.exc_info()[0])
             return False
 
+def compute_tfidf(filename):
+    df1=pd.read_csv(filename)
+    corpus=df1['Review']
+
+    vectorizer=TfidfVectorizer()
+    X=vectorizer.fit_transform(corpus)
+    print(vectorizer.get_feature_names())
+    print(X.shape)
+    #print(X)
 
 def main():
-    translator=ReplaceTopicTerms("example_hotel.xlsx")
+    translator=ReplaceTopicTerms("empty_entry.xlsx")
     translator.update_gavagai_input_file("example_hotel.csv")
+    compute_tfidf("example_hotel.csv")
+    compute_tfidf("updated_example_hotel.csv")
+
 
 
 if __name__=='__main__':
