@@ -5,8 +5,9 @@ import sys
 
 class ReplaceTopicTerms:
     '''Used for replacing words with their coresponding topics in a sentence/file of sentences/Gavagai input file  '''
-    def __init__(self):
+    def __init__(self,gavagai_export_file):
         self.map_table=[{} for i in range(4)] #Mapping table for word with size 1,2,3 and >3
+        self.load_mapping_gavagai(gavagai_export_file)
 
     def load_mapping_gavagai(self,gavagai_export_file):
         '''Create mappings using Gavagai export excel file, with default options
@@ -52,9 +53,6 @@ class ReplaceTopicTerms:
 
                 for line in f.readlines():
                     f_write = open(output_name, 'a')
-                    # elements=line.split(',')
-                    # print(elements)
-                    # elements[0]=self.replace_one_review(elements[0])
                     f_write.write(self.replace_one_review(line))
                     f_write.close()
                 f.close()
@@ -64,6 +62,13 @@ class ReplaceTopicTerms:
             return False
 
 
+def main():
+    translator=ReplaceTopicTerms("example_hotel.xlsx")
+    translator.update_gavagai_input_file("example_hotel.csv")
+
+
+if __name__=='__main__':
+    main()
 
 
 
