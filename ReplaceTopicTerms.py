@@ -77,7 +77,7 @@ def compute_tfidf(filename):
     #print(X)
 
 def main():
-    translator=ReplaceTopicTerms("empty_entry.xlsx")
+    translator=ReplaceTopicTerms("example_hotel.xlsx")
     translator.update_gavagai_input_file("example_hotel.csv")
     compute_tfidf("example_hotel.csv")
     compute_tfidf("updated_example_hotel.csv")
