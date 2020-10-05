@@ -1,7 +1,9 @@
 import xlrd
 import pandas as pd
 import sys
-from sklearn.feature_extraction.text import TfidfVectorizer
+from sklearn.feature_extraction.text import TfidfVectorizer,CountVectorizer
+import numpy as np
+from matplotlib import pyplot as plt
 
 
 class ReplaceTopicTerms:
@@ -70,18 +72,76 @@ def compute_tfidf(filename):
     df1=pd.read_csv(filename)
     corpus=df1['Review']
 
-    vectorizer=TfidfVectorizer()
+    vectorizer=TfidfVectorizer(analyzer='word',stop_words='english')
+    countVectorizer=CountVectorizer(analyzer='word',stop_words='english')
+
+
     X=vectorizer.fit_transform(corpus)
+    X2=countVectorizer.fit_transform(corpus)
+    tfidf_tokens = vectorizer.get_feature_names()
+    count_tokens= countVectorizer.get_feature_names()
+    df_tfidfvect = pd.DataFrame(data=X.toarray(), columns=tfidf_tokens)
+    df_count=pd.DataFrame(data=X2.toarray(),columns=count_tokens)
     print(vectorizer.get_feature_names())
     print(X.shape)
+    print(df_tfidfvect[50:70])
+    # print(countVectorizer.get_feature_names())
+    # print(X2.shape)
+    # print(df_count)
+
+def compute_frequency(filename):
+    df1=pd.read_csv(filename)
+    corpus=df1['Review']
+    countVectorizer = CountVectorizer(analyzer='word', stop_words='english')
+    X2 = countVectorizer.fit_transform(corpus)
+    count_tokens = countVectorizer.get_feature_names()
+    df_count = pd.DataFrame(data=X2.toarray(), columns=count_tokens)
+    sum_column=df_count.sum(axis=0)
+    sum_column=sum_column.to_frame()
+    np_sum=df_count.sum(axis=0).to_numpy()
+    sum_column.columns=['count']
+    sum_column=sum_column.sort_values(by=['count'])
+    # with open('words_with_highest_frequency_'+filename,'a') as f:
+    #     count_list=list(reversed(sum_column['count'].tolist()[-1000:]))
+    #     word_list=list(reversed(sum_column.index.values[-1000:]))
+    #     for i in range(len(count_list)):
+    #         f.write(str(word_list[i])+":"+str(count_list[i])+'\n')
+    #
+    #     f.close()
+    plt.figure(1)
+
+    plt.hist(np_sum,bins=[i for i in range(25)])
+    plt.title('Frequency in 1-25')
+    plt.xlabel('Frequency')
+    plt.ylabel('Count')
+    plt.savefig(filename[0:-4]+'_frequency_1-25.png',dpi=240)
+    plt.figure(2)
+
+    plt.hist(np_sum, bins=[25+10*i for i in range(25)])
+    plt.title('Frequency in 25-275')
+    plt.savefig(filename[0:-4] + '_frequency_25-275.png', dpi=240)
+    plt.figure(3)
+
+    plt.hist(np_sum, bins=[275 + 100 * i for i in range(40)])
+    plt.title('Frequency for 275+')
+    plt.savefig(filename[0:-4] + '_frequency_275+.png', dpi=240)
+
+
+    #print(sum_column.loc(sum_column[0].idmax()))
+
+    #print(np.max(np_sum))
+
+
     #print(X)
 
-def main():
-    translator=ReplaceTopicTerms("example_hotel.xlsx")
-    translator.update_gavagai_input_file("example_hotel.csv")
-    compute_tfidf("example_hotel.csv")
-    compute_tfidf("updated_example_hotel.csv")
 
+def main():
+    # translator=ReplaceTopicTerms("example_hotel.xlsx")
+    # translator.update_gavagai_input_file("example_hotel.csv")
+    # compute_tfidf("example_hotel.csv")
+    # compute_tfidf("updated_example_hotel.csv")
+    compute_frequency("example_hotel.csv")
+    compute_frequency("updated_example_hotel.csv")
 
 
 if __name__=='__main__':
