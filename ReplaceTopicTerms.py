@@ -6,7 +6,8 @@ from sklearn.feature_extraction.text import TfidfVectorizer,CountVectorizer
 import numpy as np
 from matplotlib import pyplot as plt
 import argparse
-
+import nltk
+from nltk.corpus import stopwords
 
 
 class ReplaceTopicTerms:
@@ -94,7 +95,7 @@ class ReplaceTopicTerms:
         '''Generate report that compares the original file and the updated file, using words in the existed mapping table
             Input:Strings|
             Output:Bool|'''
-        if outdir=='Result':
+        if outdir=='Result/':
             if not os.path.exists('Result'):
                 os.makedirs('Result')
         filelist=[original_file,updated_file]
@@ -227,6 +228,9 @@ def main():
 
 
     translator=ReplaceTopicTerms(args.mappingfile)
+    if args.language.lower()=='swedish'.lower():
+        args.language=stopwords.words('swedish')
+
     if args.outdir:
         args.outdir = args.outdir + '/'
         print(args)
