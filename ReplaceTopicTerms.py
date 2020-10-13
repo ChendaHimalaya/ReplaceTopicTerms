@@ -60,23 +60,37 @@ class ReplaceTopicTerms:
         if output_name==None:
             output_name="updated_"+gavagai_input_file
 
-        try:
-            with open(gavagai_input_file,'r') as f:
+        # try:
+        #     with open(gavagai_input_file,'r') as f:
+        #         f_write = open(output_name, 'a')
+        #         s=f.readlines()
+        #         f_write.write(s[0])   #Skip first row
+        #         f_write.close()
+        #         for line in s[1:]:
+        #             f_write = open(output_name, 'a')
+        #             f_write.write(self.replace_one_review(line))
+        #             f_write.close()
+        #         f.close()
+        #         if generate_report:
+        #             self.generate_report(gavagai_input_file,output_name,target_column,language=language,outdir=outpath)
+        #         return True
+        # except:
+        #
+        #     print("Unexpected error:", sys.exc_info()[2])
+        #     return False
+        with open(gavagai_input_file, 'r') as f:
+            f_write = open(output_name, 'a')
+            s = f.readlines()
+            f_write.write(s[0])  # Skip first row
+            f_write.close()
+            for line in s[1:]:
                 f_write = open(output_name, 'a')
-                s=f.readlines()
-                f_write.write(s[0])   #Skip first row
+                f_write.write(self.replace_one_review(line))
                 f_write.close()
-                for line in s[1:]:
-                    f_write = open(output_name, 'a')
-                    f_write.write(self.replace_one_review(line))
-                    f_write.close()
-                f.close()
-                if generate_report:
-                    self.generate_report(gavagai_input_file,output_name,target_column,language=language,outdir=outpath)
-                return True
-        except:
-            print("Unexpected error:", sys.exc_info())
-            return False
+            f.close()
+            if generate_report:
+                self.generate_report(gavagai_input_file, output_name, target_column, language=language, outdir=outpath)
+            return True
 
 
 
@@ -107,8 +121,11 @@ class ReplaceTopicTerms:
         tfidf_updated = self.compute_tfidf(updated_file, target_column,language=language)
         #tfidf_updated.replace(0,np.NaN)
         for key in reverse_map:
-            key_array=tfidf_original[key]
-            topic_value=[key_array.mean(),key_array.max(),key_array[key_array>0].min()]
+            if key in tfidf_original.keys():
+                key_array=tfidf_original[key]
+                topic_value=[key_array.mean(),key_array.max(),key_array[key_array>0].min()]
+            else:
+                topic_value=[0,0,0]
             original_value=[]
             for item in reverse_map[key]:
                 item_array=tfidf_updated[item]
