@@ -47,8 +47,14 @@ class ReplaceTopicTerms:
             return sentence
         for mapping_table in reversed(self.map_table):
             for key in mapping_table:
-                if key in sentence.lower():
-                    return self.replace_one_review(sentence.lower().split(key,1)[0])+mapping_table[key]+self.replace_one_review(sentence.lower().split(key,1)[1])
+
+                new_sentence=sentence.lower().split(" ")
+
+                for index,word in enumerate(new_sentence):
+                    if key==word:
+                        return self.replace_one_review(" ".join(new_sentence[:index]))+" "+mapping_table[key]+" "+self.replace_one_review(" ".join(new_sentence[index+1:]))
+                #if key in sentence.lower().split(" "):
+                    #return self.replace_one_review(sentence.lower().split(key,1)[0])+mapping_table[key]+self.replace_one_review(sentence.lower().split(key,1)[1])
         return sentence
 
     def update_gavagai_input_file(self,gavagai_input_file,target_column="Review",language='english',output_name=None,generate_report=True,outpath='Result/'):
