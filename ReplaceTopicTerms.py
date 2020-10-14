@@ -10,6 +10,7 @@ import nltk
 from nltk.corpus import stopwords
 
 
+
 class ReplaceTopicTerms:
     '''Used for replacing words with their coresponding topics in a sentence/file of sentences/Gavagai input file  '''
     def __init__(self,gavagai_export_file):
@@ -43,19 +44,43 @@ class ReplaceTopicTerms:
         '''Replace words that matches any of the terms in the mapping table
             Input:String |A senetence that needs to be updated
             Output:String  |the sentence with all possible replacements have been done'''
+
         if sentence=="" or sentence==" ":
             return sentence
         for mapping_table in reversed(self.map_table):
             for key in mapping_table:
+                sentence_lower=sentence.lower()
+                if " "+key+" " in sentence_lower: #In middle of sentence
 
-                new_sentence=sentence.lower().split(" ")
+                    return self.replace_one_review(sentence_lower.split(" "+key+" ", 1)[0]) + " "+mapping_table[key]+" " + self.replace_one_review(sentence_lower.split(" "+key+" ", 1)[1])
 
-                for index,word in enumerate(new_sentence):
-                    if key==word:
-                        return self.replace_one_review(" ".join(new_sentence[:index]))+" "+mapping_table[key]+" "+self.replace_one_review(" ".join(new_sentence[index+1:]))
-                #if key in sentence.lower().split(" "):
-                    #return self.replace_one_review(sentence.lower().split(key,1)[0])+mapping_table[key]+self.replace_one_review(sentence.lower().split(key,1)[1])
+                elif " "+key in sentence_lower and sentence_lower.split(" "+key,1)[1]=="": #The target is the last part of the sentence
+                    return self.replace_one_review(sentence_lower.split(" "+key, 1)[0])+" "+mapping_table[key]
+                elif key+" " in sentence_lower and sentence_lower.split(key+" ")[0]=="": #The target is at the begining
+                    return mapping_table[key]+" "+self.replace_one_review(sentence_lower.split(key+" ")[1])
+                elif key==sentence_lower:
+                    return mapping_table[key]
+
         return sentence
+        # for mapping_table in reversed(self.map_table):
+        #
+        #     for key in mapping_table:
+        #
+        #
+        #         new_sentence=sentence.lower().split(" ")
+        #         key_word=key.split(" ")
+        #         if len(new_sentence)<len(key_word):
+        #             return sentence
+        #
+        #         for index in range(len(sentence)-len(key_word)+1):
+        #             if key_word==new_sentence[index:index+len(key_word)]:
+        #                 if index==len(sentence)-len(key_word):
+        #                     return self.replace_one_review(" ".join(new_sentence[:index]))+" "+mapping_table[key]
+        #                 else:
+        #                     return self.replace_one_review(" ".join(new_sentence[:index]))+" "+mapping_table[key]+" "+self.replace_one_review(" ".join(new_sentence[index+1+len(key_word):]))
+        #         #if key in sentence.lower().split(" "):
+        #             #return self.replace_one_review(sentence.lower().split(key,1)[0])+mapping_table[key]+self.replace_one_review(sentence.lower().split(key,1)[1])
+        # return sentence
 
     def update_gavagai_input_file(self,gavagai_input_file,target_column="Review",language='english',output_name=None,generate_report=True,outpath='Result/'):
         '''Update all the reviews/sentences in the default Gavagai explorer input csv file
@@ -89,14 +114,27 @@ class ReplaceTopicTerms:
             s = f.readlines()
             f_write.write(s[0])  # Skip first row
             f_write.close()
-            for line in s[1:]:
-                f_write = open(output_name, 'a')
-                f_write.write(self.replace_one_review(line))
-                f_write.close()
             f.close()
-            if generate_report:
-                self.generate_report(gavagai_input_file, output_name, target_column, language=language, outdir=outpath)
-            return True
+        df = pd.read_csv(gavagai_input_file)
+        total_length = len(df)
+        # for line in s[1:]:
+        #     f_write = open(output_name, 'a')
+        #     f_write.write(self.replace_one_review(line))
+        #     f_write.close()
+        for i in range(total_length):
+            #f_write=open(output_name,'a')
+            message=df.iloc[i][target_column]
+            message=self.replace_one_review(message)
+
+            df[target_column][i]=message
+            #f_write.write(",".join([str(item) for item in df.loc[i]]))
+            #f_write.write('\n')
+            #f.close()
+            print('Update Done: {}/{}'.format(i+1, total_length))
+        df.to_csv(output_name,index=False,header=True)
+        if generate_report:
+            self.generate_report(gavagai_input_file, output_name, target_column, language=language, outdir=outpath)
+        return True
 
 
 
@@ -182,13 +220,13 @@ class ReplaceTopicTerms:
 
         return df_tfidf
 
-    def compute_frequency(self,filename,target_column,language='english'):
+    def compute_frequency(self,filename,target_column="Review",language='english'):
         '''Internal Use, compute word frequency
         filename:String|file path to the input file
         target_column:String|The column name of the texts that is going to be analyzed
         returns a pandas dataframe of the count matrix'''
         df1 = pd.read_csv(filename)
-        corpus = df1['Review']
+        corpus = df1[target_column]
         countVectorizer = CountVectorizer(analyzer='word', stop_words=language)
         X2 = countVectorizer.fit_transform(corpus)
         count_tokens = countVectorizer.get_feature_names()
@@ -198,7 +236,7 @@ class ReplaceTopicTerms:
         column.columns=['count']
         return column.sort_values(by="count")
 
-    def export_frequency(self,filelist,target_column,outpath=None,bin_intervals=None,legends=None,language='english'):
+    def export_frequency(self,filelist,target_column="Review",outpath=None,bin_intervals=None,legends=None,language='english'):
         '''Generate export files that compares the word frequency between the original csv file and updated one
             filelist:list(Strings)|iterable of path of filenames that needed to be ploted
             target_column:String|The column name of the texts that is going to be analyzed
@@ -241,6 +279,7 @@ class ReplaceTopicTerms:
             plt.savefig(outpath+"frequency_plot_from {} to {}.png".format(np.min(bin_interval),np.max(bin_interval)),dpi=240)
 
 def main():
+    sys.setrecursionlimit(10**6)
     parser=argparse.ArgumentParser(description="Update gavagai input files by replacing topic terms to topic representation")
     parser.add_argument('-c','--column',type=str,default='Review',help="Target Column to be analyzed(Default:Review)")
     parser.add_argument('-l','--language',type=str,default='english',help='Language of the text(Default:english)')
