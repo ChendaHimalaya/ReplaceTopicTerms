@@ -60,6 +60,9 @@ class ReplaceTopicTerms:
                     return mapping_table[key]+" "+self.replace_one_review(sentence_lower.split(key+" ")[1])
                 elif key==sentence_lower:
                     return mapping_table[key]
+                elif key in sentence_lower and (sentence_lower.split(key,1)[0]!="" and sentence_lower.split(key,1)[1]!=""):
+                    if (sentence_lower.split(key,1)[0][-1].isalpha()==False) and (sentence_lower.split(key,1)[1][0].isalpha()==False):
+                        return self.replace_one_review(sentence.lower.split(key,1)[0]+mapping_table[key]+self.replace_one_review(sentence_lower.split(key,1)[1]))
 
         return sentence
         # for mapping_table in reversed(self.map_table):
